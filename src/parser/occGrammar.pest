@@ -1,0 +1,36 @@
+alpha = { 'a'..'z' | 'A'..'Z' }
+digit = { '0'..'9' }
+bool = { "true" | "false"}
+label = {digit+}
+ident = { (alpha)+ }
+constant = { label | "PLUS" | "MINUS" | "TIMES" | "EQUAL" | "LESS" | "GREATER" }
+
+pattern = { digit+ | "_" | ident }
+patterns = { (pattern ~ "," ~ patterns)+ | pattern}
+occurrences = { (occurrence ~ "," ~ occurrences)+ | occurrence }
+
+occurrence = { "(" ~ expr ~ "^" ~ label ~ ")" }
+
+expr =	{ Fun
+			| App
+			| FApp
+			| Let
+			| LetR
+			| Case
+			| Ref
+			| RefW
+			| RefR
+			| constant
+			| ident }
+
+Fun	=	{ "func " ~ ident ~ "." ~ occurrence }
+App	=	{ occurrence ~ " " ~ occurrence }
+FApp	=	{ constant ~ " " ~ occurrence ~ " " ~ occurrence }
+Let	=	{ "let " ~ ident ~ " " ~ occurrence ~ " " ~ occurrence }
+LetR	=	{ "letrec " ~ ident ~ " " ~ occurrence ~ " " ~ occurrence }
+Case	=	{ "case " ~ occurrence ~ " " ~ "("~patterns~")" ~ "("~occurrences~")" }
+Ref	=	{ "ref " ~ occurrence }
+RefW	=	{ occurrence ~ ":=" ~ occurrence }
+RefR	=	{ "!" ~ occurrence }
+
+file = { SOI ~ occurrence ~ EOI}

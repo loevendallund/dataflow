@@ -1,0 +1,35 @@
+alpha = { 'a'..'z' | 'A'..'Z' }
+digit = { '0'..'9' }
+bool = { "true" | "false"}
+label = {digit+}
+ident = { (alpha)+ }
+constant = { label | "PLUS" | "MINUS" | "TIMES" | "EQUAL" | "LESS" | "GREATER" }
+
+pattern = { digit+ | "_" | ident }
+patterns = { (pattern ~ "," ~ patterns)+ | pattern}
+exprs = { (expr ~ "," ~ exprs)+ | expr }
+
+expr =	{ "(" ~ Fun ~ ")"
+			| "(" ~ App ~ ")"
+			| "(" ~ FApp ~ ")"
+			| "(" ~ Let ~ ")"
+			| "(" ~ LetR ~ ")"
+			| "(" ~ Case ~ ")"
+			| "(" ~ Ref ~ ")"
+			| "(" ~ RefW ~ ")"
+			| "(" ~ RefR ~ ")"
+			| "(" ~ constant ~ ")"
+			| "(" ~ ident ~ ")" 
+			}
+
+Fun	=	{ "func " ~ ident ~ "." ~ expr }
+App	=	{ expr ~ " " ~ expr}
+FApp	=	{ constant ~ " " ~ expr ~ " " ~ expr }
+Let	=	{ "let " ~ ident ~ " " ~ expr ~ " " ~ expr }
+LetR	=	{ "letrec " ~ ident ~ " " ~ expr ~ " " ~ expr }
+Case	=	{ "case " ~ expr ~ " " ~ "("~patterns~")" ~ "("~exprs~")" }
+Ref	=	{ "ref " ~ expr }
+RefW	=	{ expr ~ ":=" ~ expr }
+RefR	=	{ "!" ~ expr }
+
+file = { SOI ~ expr ~ EOI}
