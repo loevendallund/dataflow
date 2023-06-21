@@ -3,9 +3,9 @@ digit = { '0'..'9' }
 bool = { "true" | "false"}
 label = {digit+}
 ident = { (alpha)+ }
-constant = { label | "PLUS" | "MINUS" | "TIMES" | "EQUAL" | "LESS" | "GREATER" }
+constant = { label | bool | "PLUS" | "MINUS" | "TIMES" | "EQUAL" | "LESS" | "GREATER" | "NEQUAL" | "GEQ" | "LEQ" }
 
-pattern = { digit+ | "_" | ident }
+pattern = { digit+ | bool | "_" | ident }
 patterns = { (pattern ~ "," ~ patterns)+ | pattern}
 occurrences = { (occurrence ~ "," ~ occurrences)+ | occurrence }
 

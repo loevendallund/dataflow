@@ -1,5 +1,6 @@
 use crate::occParser::Type;
 use crate::occParser::Pat;
+use crate::occParser::Constant;
 
 use pest::{Parser, iterators::{Pairs, Pair}};
 use std::fs;
@@ -236,7 +237,7 @@ fn pats(mut pair: Pair<Rule>, mut vec: Vec<Pat>) -> Vec<Pat>
     let pat = conv_pat(inner.next().unwrap().as_str().to_string());
     vec.push(pat);
 
-    if (count > 1)
+    if count > 1
     {
         return pats(inner.next().unwrap(), vec);
     }
@@ -245,7 +246,9 @@ fn pats(mut pair: Pair<Rule>, mut vec: Vec<Pat>) -> Vec<Pat>
 
 fn conv_pat(pat: String) -> Pat
 {
-    if (pat.parse::<usize>().is_ok()) { return Pat::Const(pat.parse::<usize>().unwrap()); }
-    else if (pat == "_") { return Pat::Wild; }
+    if pat.parse::<usize>().is_ok() { return Pat::Const(Constant::Num(pat.parse::<usize>().unwrap())); }
+    else if pat == "true" { return Pat::Const(Constant::Bool(true)); }
+    else if pat == "false" { return Pat::Const(Constant::Bool(false)); }
+    else if pat == "_" { return Pat::Wild; }
     else { return Pat::Var(pat); }
 }

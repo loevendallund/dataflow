@@ -1,11 +1,12 @@
 use crate::occParser;
+use crate::occParser::Constant;
 use std::collections::HashMap;
 
 #[derive(Debug)]
 #[derive(Clone)]
 pub enum Val
 {
-    Const(usize),
+    Const(Constant),
     Closure 
     {
         ident: String,
@@ -22,6 +23,8 @@ pub enum Val
     Loc(String),
     Unit,
 }
+
+static mut next: usize = 0;
 
 pub fn intepret(occ: occParser::Occ) -> Val
 {
@@ -41,7 +44,10 @@ fn eval(occ: occParser::Occ, mut env: HashMap<String, Val>, mut sto: HashMap<Str
     {
         occParser::Type::Const =>
         {
-            return (Val::Const(expr.ident.parse::<usize>().unwrap()), sto);
+            if expr.ident.parse::<usize>().is_ok() { return (Val::Const(Constant::Num(expr.ident.parse::<usize>().unwrap())), sto); }
+            else if expr.ident == "true".to_string() { return (Val::Const(Constant::Bool(true)), sto); }
+            else if expr.ident == "false".to_string() { return (Val::Const(Constant::Bool(false)), sto); }
+            else { unreachable!(); }
         }
 
         occParser::Type::Var =>
@@ -118,27 +124,75 @@ fn eval(occ: occParser::Occ, mut env: HashMap<String, Val>, mut sto: HashMap<Str
             {
                 "PLUS" =>
                 {
-                    let c1: usize;
-                    let c2: usize;
+                    let c1: Constant;
+                    let c2: Constant;
                     match v1 { Val::Const(c) => { c1 = c} _=>unreachable!() }
                     match v2 { Val::Const(c) => { c2 = c} _=>unreachable!() }
                     return (Val::Const(c1 + c2),sto)
                 }
                 "MINUS" =>
                 {
-                    let c1: usize;
-                    let c2: usize;
+                    let c1: Constant;
+                    let c2: Constant;
                     match v1 { Val::Const(c) => { c1 = c} _=>unreachable!() }
                     match v2 { Val::Const(c) => { c2 = c} _=>unreachable!() }
                     return (Val::Const(c1 - c2),sto)
                 }
                 "TIMES" =>
                 {
-                    let c1: usize;
-                    let c2: usize;
+                    let c1: Constant;
+                    let c2: Constant;
                     match v1 { Val::Const(c) => { c1 = c} _=>unreachable!() }
                     match v2 { Val::Const(c) => { c2 = c} _=>unreachable!() }
                     return (Val::Const(c1 * c2),sto)
+                }
+                "GREATER" =>
+                {
+                    let c1: Constant;
+                    let c2: Constant;
+                    match v1 { Val::Const(c) => { c1 = c} _=>unreachable!() }
+                    match v2 { Val::Const(c) => { c2 = c} _=>unreachable!() }
+                    return (Val::Const(occParser::Great(c1, c2)),sto)
+                }
+                "LESS" =>
+                {
+                    let c1: Constant;
+                    let c2: Constant;
+                    match v1 { Val::Const(c) => { c1 = c} _=>unreachable!() }
+                    match v2 { Val::Const(c) => { c2 = c} _=>unreachable!() }
+                    return (Val::Const(occParser::Less(c1, c2)),sto)
+                }
+                "EQUAL" =>
+                {
+                    let c1: Constant;
+                    let c2: Constant;
+                    match v1 { Val::Const(c) => { c1 = c} _=>unreachable!() }
+                    match v2 { Val::Const(c) => { c2 = c} _=>unreachable!() }
+                    return (Val::Const(occParser::Equal(c1, c2)),sto)
+                }
+                "NEQUAL" =>
+                {
+                    let c1: Constant;
+                    let c2: Constant;
+                    match v1 { Val::Const(c) => { c1 = c} _=>unreachable!() }
+                    match v2 { Val::Const(c) => { c2 = c} _=>unreachable!() }
+                    return (Val::Const(occParser::NEqual(c1, c2)),sto)
+                }
+                "LEQ" =>
+                {
+                    let c1: Constant;
+                    let c2: Constant;
+                    match v1 { Val::Const(c) => { c1 = c} _=>unreachable!() }
+                    match v2 { Val::Const(c) => { c2 = c} _=>unreachable!() }
+                    return (Val::Const(occParser::LEq(c1, c2)),sto)
+                }
+                "GEQ" =>
+                {
+                    let c1: Constant;
+                    let c2: Constant;
+                    match v1 { Val::Const(c) => { c1 = c} _=>unreachable!() }
+                    match v2 { Val::Const(c) => { c2 = c} _=>unreachable!() }
+                    return (Val::Const(occParser::GEq(c1, c2)),sto)
                 }
                 _=>{ return (v1,sto) }
             }
@@ -214,9 +268,10 @@ fn eval(occ: occParser::Occ, mut env: HashMap<String, Val>, mut sto: HashMap<Str
         {
             let v: Val;
             match expr.LHS { Some(e) => { (v, sto) = eval(Box::into_inner(e),env.clone(), sto) } None => unreachable!() }
-            let loc = "l".to_string();
+            let loc: String;
+            unsafe { loc = "_".to_string() + &next.to_string(); next = next+1; }
             sto.insert(loc.clone(), v);
-            return (Val::Loc("l".to_string()), sto);
+            return (Val::Loc(loc), sto);
         }
 
         occParser::Type::RefW =>
@@ -255,7 +310,7 @@ fn eval(occ: occParser::Occ, mut env: HashMap<String, Val>, mut sto: HashMap<Str
         _=>
         {
             println!("Unimplemented rule");
-            return (Val::Const(0), sto);
+            return (Val::Const(Constant::Num(0)), sto);
         }
     }
 }
@@ -268,11 +323,11 @@ fn p_match(v: Val, pats: Vec<occParser::Pat>) -> usize
         {
             for i in 0..pats.len()
             {
-                match pats[i]
+                match pats[i].clone()
                 {
                     occParser::Pat::Const(y) =>
                     {
-                        if (y == x) { return i; }
+                        if y == x { return i; }
                     }
                     _=> { return i; }
                 }

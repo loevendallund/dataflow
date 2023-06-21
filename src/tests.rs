@@ -72,20 +72,31 @@ fn references()
     let res: usize = 10;
 
     // Simple reference with read.
-    let mut string = "(!(ref (10^1)^2)^3)".to_string(); // Factorial
+    let mut string = "(!(ref (10^1)^2)^3)".to_string();
     let mut occ = occParser::Parse_Expr(string);
     let mut val: evaluator::Val = evaluator::intepret(occ);
     assert!(match val { evaluator::Val::Const(x) => { x == res } _ => {false} });
 
     // Reference with aliasing before read.
-    string = "(let x (ref (10^1)^2) (!(x^3)^4)^5)".to_string(); // Factorial
+    string = "(let x (ref (10^1)^2) (!(x^3)^4)^5)".to_string();
     occ = occParser::Parse_Expr(string);
     val = evaluator::intepret(occ);
     assert!(match val { evaluator::Val::Const(x) => { x == res } _ => {false} });
 
     // Reference with aliasing and write before read.
-    string = "(let x (ref (100^1)^2) (let z ((x^3):=(10^4)^5) (!(x^7)^8)^9)^10)".to_string(); // Factorial
+    string = "(let x (ref (100^1)^2) (let z ((x^3):=(10^4)^5) (!(x^7)^8)^9)^10)".to_string();
     occ = occParser::Parse_Expr(string);
     val = evaluator::intepret(occ);
     assert!(match val { evaluator::Val::Const(x) => { x == res } _ => {false} });
+}
+
+#[test]
+fn constant()
+{
+    let v1 = evaluator::Constant::Num(10);
+    let v2 = evaluator::Constant::Num(10);
+    let v3 = evaluator::Constant::Num(20);
+
+    assert_eq!(v1, v2);
+    //assert_eq(v1, v3);
 }

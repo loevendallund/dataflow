@@ -1,5 +1,5 @@
 use pest::{Parser, iterators::{Pairs, Pair}};
-use std::fs;
+use std::ops;
 
 #[derive(Parser)]
 #[grammar = "parser/occGrammar.pest"]
@@ -29,7 +29,7 @@ pub struct Occ
 #[derive(Clone)]
 pub enum Pat
 {
-    Const(usize),
+    Const(Constant),
     Bool(bool),
     Var(String),
     Wild,
@@ -51,6 +51,121 @@ pub enum Type
     Ref,
     RefW,
     RefR
+}
+
+
+#[derive(Debug)]
+#[derive(Clone)]
+#[derive(PartialEq)]
+pub enum Constant
+{
+    Num(usize),
+    Bool(bool),
+}
+
+impl ops::Add<Constant> for Constant
+{
+    type Output = Constant;
+
+    fn add(self, _rhs: Constant) -> Constant
+    {
+        let v_1: usize;
+        let v_2: usize;
+        match self { Constant::Num(x) => { v_1 = x; } _ => { unreachable!() } };
+        match _rhs { Constant::Num(x) => { v_2 = x; } _ => { unreachable!() } };
+
+        return Constant::Num(v_1 + v_2);
+    }
+}
+
+impl ops::Sub<Constant> for Constant
+{
+    type Output = Constant;
+
+    fn sub(self, _rhs: Constant) -> Constant
+    {
+        let v_1: usize;
+        let v_2: usize;
+        match self { Constant::Num(x) => { v_1 = x; } _ => { unreachable!() } };
+        match _rhs { Constant::Num(x) => { v_2 = x; } _ => { unreachable!() } };
+
+        return Constant::Num(v_1 - v_2);
+    }
+}
+
+impl ops::Mul<Constant> for Constant
+{
+    type Output = Constant;
+
+    fn mul(self, _rhs: Constant) -> Constant
+    {
+        let v_1: usize;
+        let v_2: usize;
+        match self { Constant::Num(x) => { v_1 = x; } _ => { unreachable!() } };
+        match _rhs { Constant::Num(x) => { v_2 = x; } _ => { unreachable!() } };
+
+        return Constant::Num(v_1 * v_2);
+    }
+}
+
+pub fn Great(c1: Constant, c2: Constant) -> Constant
+{
+    let v_1: usize;
+    let v_2: usize;
+    match c1 { Constant::Num(x) => { v_1 = x; } _ => { unreachable!() } };
+    match c2 { Constant::Num(x) => { v_2 = x; } _ => { unreachable!() } };
+
+    return Constant::Bool(v_1 > v_2);
+}
+
+pub fn Less(c1: Constant, c2: Constant) -> Constant
+{
+    let v_1: usize;
+    let v_2: usize;
+    match c1 { Constant::Num(x) => { v_1 = x; } _ => { unreachable!() } };
+    match c2 { Constant::Num(x) => { v_2 = x; } _ => { unreachable!() } };
+
+    return Constant::Bool(v_1 < v_2);
+}
+
+pub fn Equal(c1: Constant, c2: Constant) -> Constant
+{
+    let v_1: usize;
+    let v_2: usize;
+    match c1 { Constant::Num(x) => { v_1 = x; } _ => { unreachable!() } };
+    match c2 { Constant::Num(x) => { v_2 = x; } _ => { unreachable!() } };
+
+    return Constant::Bool(v_1 == v_2);
+}
+
+pub fn NEqual(c1: Constant, c2: Constant) -> Constant
+{
+    let v_1: usize;
+    let v_2: usize;
+    match c1 { Constant::Num(x) => { v_1 = x; } _ => { unreachable!() } };
+    match c2 { Constant::Num(x) => { v_2 = x; } _ => { unreachable!() } };
+
+    return Constant::Bool(v_1 != v_2);
+}
+
+pub fn GEq(c1: Constant, c2: Constant) -> Constant
+{
+    let v_1: usize;
+    let v_2: usize;
+    match c1 { Constant::Num(x) => { v_1 = x; } _ => { unreachable!() } };
+    match c2 { Constant::Num(x) => { v_2 = x; } _ => { unreachable!() } };
+
+    return Constant::Bool(v_1 >= v_2);
+}
+
+pub fn LEq(c1: Constant, c2: Constant) -> Constant
+{
+    let v_1: usize;
+    let v_2: usize;
+    match c1 { Constant::Num(x) => { v_1 = x; } _ => { unreachable!() } };
+    match c2 { Constant::Num(x) => { v_2 = x; } _ => { unreachable!() } };
+
+    return Constant::Bool(v_1 <= v_2);
 }
 
 pub fn Parse_Expr(mut str: String) -> Occ
@@ -184,7 +299,7 @@ fn parse_expr(mut pair: Pair<Rule>) -> Expr
                 ExpType: Type::Case,
                 ident: "".to_string(),
                 LHS: id,
-                RHS: None,//Some(Box::new(parse_occ(inner.next().unwrap().into_inner()))),
+                RHS: None,
                 Pats: Some(l_pats),
                 Occs: Some(l_occs),
             };
@@ -277,7 +392,7 @@ fn pats(mut pair: Pair<Rule>, mut vec: Vec<Pat>) -> Vec<Pat>
     let pat = conv_pat(inner.next().unwrap().as_str().to_string());
     vec.push(pat);
 
-    if (count > 1)
+    if count > 1
     {
         return pats(inner.next().unwrap(), vec);
     }
@@ -286,7 +401,7 @@ fn pats(mut pair: Pair<Rule>, mut vec: Vec<Pat>) -> Vec<Pat>
 
 fn conv_pat(pat: String) -> Pat
 {
-    if (pat.parse::<usize>().is_ok()) { return Pat::Const(pat.parse::<usize>().unwrap()); }
-    else if (pat == "_") { return Pat::Wild; }
+    if pat.parse::<usize>().is_ok() { return Pat::Const(Constant::Num(pat.parse::<usize>().unwrap())); }
+    else if pat == "_" { return Pat::Wild; }
     else { return Pat::Var(pat); }
 }
