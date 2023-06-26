@@ -393,7 +393,7 @@ fn eval(occ: occParser::Occ, mut env: HashMap<String, Val>, mut sto: HashMap<Str
             let v: Val;
             match expr.LHS { Some(e) => { (v, sto, w, gbind, (L, V)) = eval(Box::into_inner(e),env.clone(), sto, w, gbind) } None => unreachable!() }
             let loc: String;
-            unsafe { loc = "_".to_string() + &next.to_string(); next = next+1; }
+            unsafe { loc = "_nu".to_string() + &next.to_string(); next = next+1; }
             sto.insert(loc.clone(), v);
             w.insert(SOcc { name: loc.clone(), label: occ.label.clone() }, (L,V));
             gbind.insert(loc.clone(), occ.label.clone());
