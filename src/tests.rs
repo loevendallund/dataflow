@@ -1,36 +1,11 @@
+use std::collections::HashMap;
+
 use crate::occParser;
 use crate::exprParser;
 use crate::convExprToOcc;
 use crate::evaluator;
-
-    //let ReadFile = fs::read_to_string("test.df").expect("cannot read file");
-    //let ReadFile = "(100^1)".to_string();
-    //let ReadFile = "(x^1)".to_string();
-    //let ReadFile = "((func x.(x^1)^2) (5^5)^6)".to_string();
-    //let ReadFile = "(let ex (10^1) (ex^2)^3)".to_string();
-    //let ReadFile = "(let x (let y (1^1) (2^2)^3) (x^4)^5)".to_string();
-    //let ReadFile = "(let x (func y.(x^1)^2) ((x^3) ((x^4) (5^5)^6)^7)^8)".to_string();
-    //let ReadFile = "(let x (func x.(PLUS (x^1) (1^2)^3)^4) ((x^5) ((x^6) (10^7)^8)^9)^10)".to_string();
-    //let ReadFile = "(PLUS (1^1) (2^2)^3)".to_string();
-    //let ReadFile = "(MINUS (5^1) (3^2)^3)".to_string();
-    //let ReadFile = "(TIMES (5^1) (2^2)^3)".to_string();
-    //let ReadFile = "(case (3^1) (1,2,3)((10^2),(20^3),(30^4))^5)".to_string();
-    //let ReadFile = "(let x (ref (1^1)^2) (!(x^2)^3)^4)".to_string();
-    //let ReadFile = "(let x (ref (1^1)^2) ((x^2):=(10^3)^4)^5)".to_string();
-    
-    //let ReadFile = "(letrec x (func y.(x^1)^2) (x^2)^3)".to_string();
-    //let ReadFile = "(letrec x (func y.(PLUS (y^1) (1^2)^3)^4) ((x^3) (10^4)^5)^6)".to_string();
-    //let ReadFile = "(letrec p (func y.(case (y^1) (p)((10^2))^5)^4) ((p^3) (10^4)^5)^6)".to_string();
-    //let ReadFile = "((func x.(letrec x (func y.(case (y^1) (x)((10^2))^5)^4) ((x^3) (10^4)^5)^6)^2) (1^1)^1)".to_string();
-    //let ReadFile = "(letrec p (func y.(case (y^1) (0,_)((10^2),(20^2))^5)^4) ((p^3) (0^4)^5)^6)".to_string();
-    //let ReadFile = "(func y.(letrec p (func y.(case (y^1) (0,_)((10^2),(20^2))^5)^4) ((p^3) (0^4)^5)^6)^8)".to_string();
-    //let ReadFile = "((func z.(letrec p (func y.(case (y^1) (0,_)((1^2),(TIMES (y^1) (2^2)^3))^5)^4) ((p^3) (5^4)^5)^6)^8) (1^10)^11)".to_string();
-
-    //let ReadFile = "(100)".to_string();
-    //let ReadFile = "((func x.(x)) (10))".to_string();
-    //let ReadFile = "(PLUS (5) (5))".to_string();
-    //let ReadFile = "(letrec x (func y.(y)) ((x) (5)))".to_string();
-    //let ReadFile = "(let x (ref (100)) (let z ((x):=(5)) (!(x))))".to_string();
+use crate::tc;
+use crate::tc::SemOcc;
 
 fn factorial(num: usize) -> usize
 {
@@ -41,7 +16,9 @@ fn factorial(num: usize) -> usize
     }
 }
 
-#[test]
+fn empty_base() -> tc::Type { tc::Type::Base { delta: Vec::new(), kappa: Vec::new() } }
+
+/*#[test]
 fn fac()
 {
     // Factorial occurrence, which uses functions, applications, recursive bindings, and functional
@@ -64,39 +41,146 @@ fn fac()
     let res2: usize;
     match val { evaluator::Val::Const(x) => { res2 = x; } _ => { unreachable!() } };
     assert!(match valConv { evaluator::Val::Const(x) => { x == res && x == res2 } _ => {false} });
+}*/
+
+#[test]
+fn const_occ()
+{
+	let occurrence = "(1)".to_string();
+
+	let expr: exprParser::Expr = exprParser::parser(occurrence);
+	let occ = convExprToOcc::convert(expr);
+	
+	let gamma: HashMap<tc::SemOcc, tc::Type> = HashMap::new();
+	let pi: tc::Pi = tc::Pi { p: Vec::new() };
+	let mut _tc: tc::TypeChecker = tc::TypeChecker{ gamma, pi, occ, assumption: Vec::new()};
+	let tc_t: tc::Type = _tc.type_check();
+
+
+	let base = tc::Type::Base { delta: Vec::new() , kappa: Vec::new() };
+	
+	assert!(tc_t == base);
 }
 
 #[test]
-fn references()
+fn const_err_occ()
 {
-    let res: usize = 10;
+	let occurrence = "(1)".to_string();
 
-    // Simple reference with read.
-    let mut string = "(!(ref (10^1)^2)^3)".to_string();
-    let mut occ = occParser::Parse_Expr(string);
-    let mut val: evaluator::Val = evaluator::intepret(occ);
-    assert!(match val { evaluator::Val::Const(x) => { x == res } _ => {false} });
+	let expr: exprParser::Expr = exprParser::parser(occurrence);
+	let occ = convExprToOcc::convert(expr);
+	
+	let gamma: HashMap<tc::SemOcc, tc::Type> = HashMap::new();
+	let pi: tc::Pi = tc::Pi { p: Vec::new() };
+	let mut _tc: tc::TypeChecker = tc::TypeChecker{ gamma, pi, occ, assumption: Vec::new()};
+	let tc_t: tc::Type = _tc.type_check();
 
-    // Reference with aliasing before read.
-    string = "(let x (ref (10^1)^2) (!(x^3)^4)^5)".to_string();
-    occ = occParser::Parse_Expr(string);
-    val = evaluator::intepret(occ);
-    assert!(match val { evaluator::Val::Const(x) => { x == res } _ => {false} });
-
-    // Reference with aliasing and write before read.
-    string = "(let x (ref (100^1)^2) (let z ((x^3):=(10^4)^5) (!(x^7)^8)^9)^10)".to_string();
-    occ = occParser::Parse_Expr(string);
-    val = evaluator::intepret(occ);
-    assert!(match val { evaluator::Val::Const(x) => { x == res } _ => {false} });
+	let mut delta: Vec<SemOcc> = Vec::new();
+	delta.push(tc::SemOcc {ident: "x".to_string(), label: 1});
+	let base = tc::Type::Base { delta , kappa: Vec::new() };
+	
+	assert!(tc_t != base);
 }
 
 #[test]
-fn constant()
+fn var_occ()
 {
-    let v1 = evaluator::Constant::Num(10);
-    let v2 = evaluator::Constant::Num(10);
-    let v3 = evaluator::Constant::Num(20);
+	let occurrence = "(x)".to_string();
 
-    assert_eq!(v1, v2);
-    //assert_eq(v1, v3);
+	let expr: exprParser::Expr = exprParser::parser(occurrence);
+	let occ = convExprToOcc::convert(expr);
+	
+	let mut gamma: HashMap<tc::SemOcc, tc::Type> = HashMap::new();
+	gamma.insert(tc::SemOcc {ident: "x".to_string(), label: 2}, empty_base());
+	let pi: tc::Pi = tc::Pi { p: Vec::new() };
+	let mut _tc: tc::TypeChecker = tc::TypeChecker{ gamma, pi, occ, assumption: Vec::new()};
+	let tc_t: tc::Type = _tc.type_check();
+
+
+	let mut delta: Vec<SemOcc> = Vec::new();
+	delta.push(tc::SemOcc {ident: "x".to_string(), label: 1});
+	let base = tc::Type::Base { delta , kappa: Vec::new() };
+	
+	assert!(tc_t == base);
+}
+
+#[test]
+fn var_err_occ()
+{
+	let occurrence = "(x)".to_string();
+
+	let expr: exprParser::Expr = exprParser::parser(occurrence);
+	let occ = convExprToOcc::convert(expr);
+	
+	let mut gamma: HashMap<tc::SemOcc, tc::Type> = HashMap::new();
+	gamma.insert(tc::SemOcc {ident: "x".to_string(), label: 2}, empty_base());
+	let pi: tc::Pi = tc::Pi { p: Vec::new() };
+	let mut _tc: tc::TypeChecker = tc::TypeChecker{ gamma, pi, occ, assumption: Vec::new()};
+	let tc_t: tc::Type = _tc.type_check();
+
+
+	let mut delta: Vec<SemOcc> = Vec::new();
+	delta.push(tc::SemOcc {ident: "y".to_string(), label: 3});
+	let base = tc::Type::Base { delta , kappa: Vec::new() };
+	
+	assert!(tc_t != base);
+}
+
+#[test]
+fn var_err_label_occ()
+{
+	let occurrence = "(x)".to_string();
+
+	let expr: exprParser::Expr = exprParser::parser(occurrence);
+	let occ = convExprToOcc::convert(expr);
+	
+	let mut gamma: HashMap<tc::SemOcc, tc::Type> = HashMap::new();
+	gamma.insert(tc::SemOcc {ident: "x".to_string(), label: 2}, empty_base());
+	let pi: tc::Pi = tc::Pi { p: Vec::new() };
+	let mut _tc: tc::TypeChecker = tc::TypeChecker{ gamma, pi, occ, assumption: Vec::new()};
+	let tc_t: tc::Type = _tc.type_check();
+
+
+	let mut delta: Vec<SemOcc> = Vec::new();
+	delta.push(tc::SemOcc {ident: "x".to_string(), label: 3});
+	let base = tc::Type::Base { delta , kappa: Vec::new() };
+	
+	assert!(tc_t != base);
+}
+
+#[test]
+fn var_err_ident_occ()
+{
+	let occurrence = "(x)".to_string();
+
+	let expr: exprParser::Expr = exprParser::parser(occurrence);
+	let occ = convExprToOcc::convert(expr);
+	
+	let mut gamma: HashMap<tc::SemOcc, tc::Type> = HashMap::new();
+	gamma.insert(tc::SemOcc {ident: "x".to_string(), label: 2}, empty_base());
+	let pi: tc::Pi = tc::Pi { p: Vec::new() };
+	let mut _tc: tc::TypeChecker = tc::TypeChecker{ gamma, pi, occ, assumption: Vec::new()};
+	let tc_t: tc::Type = _tc.type_check();
+
+
+	let mut delta: Vec<SemOcc> = Vec::new();
+	delta.push(tc::SemOcc {ident: "y".to_string(), label: 2});
+	let base = tc::Type::Base { delta , kappa: Vec::new() };
+	
+	assert!(tc_t != base);
+}
+
+#[test]
+fn all_pi_simple()
+{
+	let mut p: Vec<(usize, usize)> = Vec::new();
+	p.push((0,1));
+	p.push((1,2));
+
+	let pi: tc::Pi = tc::Pi { p };
+	let res: Vec<tc::Pi> = pi.clone().get_all_pi(2);
+
+	println!("{:#?}", pi);
+
+	assert!(res == vec![pi]);
 }

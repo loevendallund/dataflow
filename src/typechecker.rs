@@ -78,8 +78,8 @@ pub fn TCheck(mut Gamma: HashMap<SemOcc, Type>, Pi: HashMap<usize, usize>, occ: 
 
             let t1: Type;
             match occ.clone().expr.LHS { Some(occ1) => {(t1, Gamma) = TCheck(Gamma, Pi.clone(), Box::into_inner(occ1), v.clone(), assumption.clone()); } None => { unreachable!() } }
-            println!("assumption: {:#?}", assumption);
-            println!("type: {:#?}", t1);
+            //println!("assumption: {:#?}", assumption);
+            //println!("type: {:#?}", t1);
 
             match t1 { 
                 Type::Abs { T1, T2 } =>  
