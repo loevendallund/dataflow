@@ -54,9 +54,10 @@ impl TypeChecker
 {
 	pub fn type_check(&mut self) -> Type
 	{
-		//let rev_pi: HashMap<usize, usize> = self.construct_rev_pi();
-		//println!("{:#?}", self.pi);
-		//println!("{:#?}", rev_pi);
+		unsafe
+		{
+			next = 0;
+		}
 
 		return self.check();
 	}
@@ -268,11 +269,14 @@ impl TypeChecker
 
 		match t1.clone()
 		{
-			Type::Base { mut delta, mut kappa } =>
+			Type::Base { delta, kappa } =>
 			{
 				for occ in delta.clone()
 				{
-					if !occurrences.contains(&occ.clone()) { occurrences.push(occ); }
+					if !occurrences.contains(&occ.clone())
+               { 
+                   occurrences.push(occ);
+               }
 				}
 				for location in kappa.clone()
 				{
@@ -281,7 +285,10 @@ impl TypeChecker
                    nus.extend(self.get_all_bindings(location, self.occ.clone().label));
 						 for nu in nus.clone()
 						 {
-							 if !occurrences.contains(&nu.clone()) { occurrences.push(nu); }
+							 if !occurrences.contains(&nu.clone())
+                      {
+                          occurrences.push(nu);
+                      }
 						 }
                }
 				}
@@ -300,8 +307,20 @@ impl TypeChecker
 					{
 						Type::Base { delta, kappa } =>
 						{
-							occurrences.extend(delta.clone());
-							kappas.extend(kappa.clone());
+                      for occurence in delta.clone()
+                      {
+                          if !(occurrences.contains(&occurence))
+                          {
+                              occurrences.push(occurence)
+                          }
+                      }
+                      for reference in kappa.clone()
+                      {
+                          if !(kappas.contains(&reference))
+                          {
+                              kappas.push(reference)
+                          }
+                      }
 						}
 						Type::Abs { T1, T2 } => { unreachable!("Error: mutable bindings cannot be abstractions"); }
 					}
@@ -321,7 +340,7 @@ impl TypeChecker
 			}
 		}*/
 
-		return self.union(t1, t2);
+		return t2;
 	}
 
 	fn dive(&mut self, into: Option<Box<occParser::Occ>>) -> TypeChecker

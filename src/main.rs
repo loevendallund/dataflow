@@ -13,7 +13,8 @@ pub mod approxOrder;
 pub mod tc;
 
 #[cfg(test)]
-mod tests;
+#[path = "tests/tests.rs"]
+pub mod tests;
 
 use std::collections::HashMap;
 
@@ -38,21 +39,22 @@ fn main()
     //let ReadFile = "(let x (10) (x))".to_string();
     //let ReadFile = "(PLUS (5) (5))".to_string();
     //let ReadFile = "(letrec x (func y.(y)) ((x) (5)))".to_string();
-    //let ReadFile = "(let x (ref (100)) (!(x)))".to_string();
+    let ReadFile = "(let x (ref (100)) (!(x)))".to_string();
     //let ReadFile = "(let x (ref (100)) (let z ((x):=(5)) (!(x))))".to_string();
     //let ReadFile = "(let x (ref (100)) (let z (ref (x)) (!(z))))".to_string();
     //let ReadFile = "(let x (ref (100)) (let z (let q (ref (x)) ((x):=(10))) (!(x))))".to_string();
     //let ReadFile = "(let x (ref (let y (1) (y))) (let z ((x):=(5)) (!(x))))".to_string();
     //let ReadFile = "(let x (ref (10)) ((x):=(10)))".to_string();
-    let ReadFile = "(!(let x (ref (10)) (case (1) (1,2)((10),(let z ((x):=(2)) (x))))))".to_string();
+    //let ReadFile = "(!(let x (ref (10)) (case (1) (1,2)((10),(let z ((x):=(2)) (x))))))".to_string();
     //let ReadFile = "((func z.(letrec fac (func y.(case (y) (0,_)((1),(TIMES (y) ((fac) (MINUS (y) (1))))))) ((fac) (z)))) (4))".to_string(); // Factorial
+    //let ReadFile = "(let x (ref (3)) (let y (let z (5) ((x):=(z)))(!(x))))".to_string();
 
 
     //let occ = occParser::Parse_Expr(ReadFile);
     let expr: exprParser::Expr = exprParser::parser(ReadFile);
     //println!("{:#?}",expr);
     let occ = convert(expr);
-    println!("{:#?}",occ);
+    //println!("{:#?}",occ);
 
     let mut w: HashMap<SOcc, (Vec<SOcc>, Vec<SOcc>)> = HashMap::new();
     let mut gbind: HashMap<String, usize> = HashMap::new();
@@ -99,9 +101,9 @@ fn main()
     Pi2.insert(11,12);
     let v: Vec<HashMap<usize,usize>>= vec![Pi1, Pi2];*/
     let Pi = approx(occ.clone());
-    let t: typechecker::Type;
-    (t, Gamma) = typechecker::TCheck(Gamma, Pi.clone(), occ.clone(), Vec::new(), None);
-    println!("Old: {:#?}",t);
+    //let t: typechecker::Type;
+    //(t, Gamma) = typechecker::TCheck(Gamma, Pi.clone(), occ.clone(), Vec::new(), None);
+    //println!("Old: {:#?}",t);
 
     let mut gamma1: HashMap<tc::SemOcc, tc::Type> = HashMap::new();
 
