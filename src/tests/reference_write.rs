@@ -6,7 +6,6 @@ use crate::convExprToOcc;
 use crate::evaluator;
 use crate::tc;
 use crate::tc::SemOcc;
-use crate::approxOrder::approx;
 
 fn empty_base() -> tc::Type { tc::Type::Base { delta: Vec::new(), kappa: Vec::new() } }
 

@@ -58,9 +58,7 @@ fn read_var()
     let occ = convExprToOcc::convert(expr);
 
     let mut gamma: HashMap<tc::SemOcc, tc::Type> = HashMap::new();
-    let Pi = approx(occ.clone());
-    let mut pi: tc::Pi = tc::Pi { p: Vec::new() };
-    pi.construct_from_hash(Pi);
+    let pi = approx(occ.clone());
     let mut assumption = Vec::new();
 
     gamma.insert(tc::SemOcc {ident: "x".to_string(), label: 5}, tc::Type::Base { delta: Vec::new(), kappa: Vec::new() });

@@ -108,13 +108,13 @@ fn main()
     let mut gamma1: HashMap<tc::SemOcc, tc::Type> = HashMap::new();
 
     let mut _Pi: tc::Pi = tc::Pi { p: Vec::new() };
-    _Pi.construct_from_hash(Pi);
-    let mut _tc: tc::TypeChecker = tc::TypeChecker{ gamma: gamma1, pi: _Pi, occ, assumption: Vec::new() };
+    //_Pi.construct_from_hash(Pi);
+    let mut _tc: tc::TypeChecker = tc::TypeChecker{ gamma: gamma1, pi: Pi, occ, assumption: Vec::new() };
     
-    let tc_t: tc::Type = _tc.type_check();
+    //let tc_t: tc::Type = _tc.type_check();
 
-    println!("New: {:#?}",tc_t);
-    println!("{:#?}",_tc.gamma);
+    //println!("New: {:#?}",tc_t);
+    //println!("{:#?}",_tc.gamma);
 
 
 	/*let mut p: Vec<(usize, usize)> = Vec::new();
