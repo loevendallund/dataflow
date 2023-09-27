@@ -13,11 +13,12 @@ use crate::tc::SemOcc;
 #[cfg(test)] pub mod app;
 #[cfg(test)] pub mod fapp;
 #[cfg(test)] pub mod letTest;
+#[cfg(test)] pub mod case;
+#[cfg(test)] pub mod reference;
 #[cfg(test)] pub mod reference_read;
 #[cfg(test)] pub mod reference_write;
 
 fn empty_base() -> tc::Type { tc::Type::Base { delta: Vec::new(), kappa: Vec::new() } }
-
 
 #[test]
 fn const_occ()
