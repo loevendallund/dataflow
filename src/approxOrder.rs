@@ -8,89 +8,133 @@ use crate::tc::Pi;
 pub fn approx(occ: Occ) -> Pi
 {
     let vec: Vec<(usize,usize)>;
-    (vec,_) = ApproximateOrder(occ, 0);
+    (vec,_,_) = ApproximateOrder(occ, 0);
     let pi: Pi = Pi {p: vec};
     return pi;
 }
 
-fn ApproximateOrder(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize)
+fn ApproximateOrder(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize, Option<Box<Occ>>)
 {
     match occ.expr.ExpType
     {
         Type::Const =>	{ approx_end(occ, last_point) }
         Type::Var   =>	{ approx_end(occ, last_point) }
-        Type::Fun   =>	{ approx_reverse(occ, last_point) }
-        Type::App   =>	{ approx_simple(occ, last_point) }
-        Type::FApp  =>	{ approx_simple(occ, last_point) }
-        Type::Let   =>	{ approx_simple(occ, last_point) }
+        Type::Fun   =>	{ approx_abs(occ, last_point) }
+        Type::App   =>	{ approx_app(occ, last_point) }
+        Type::FApp  =>	{ approx_none(occ, last_point) }
+        Type::Let   =>	{ approx_let(occ, last_point) }
         Type::Case  =>  { approx_complex(occ, last_point) }
-        Type::Ref   =>	{ approx_rhs(occ, last_point) }
-        Type::RefW  =>	{ approx_simple(occ, last_point) }
-        Type::RefR  =>	{ approx_rhs(occ, last_point) }
+        Type::Ref   =>	{ approx_ref(occ, last_point) }
+        Type::RefR  =>	{ approx_ref(occ, last_point) }
+        Type::RefW  =>	{ approx_none(occ, last_point) }
         _ => { unreachable!("Either those doesn't work or are unimplemented!!!!"); }
 		}
 }
 
-fn approx_end(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize)
+fn approx_end(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize, Option<Box<Occ>>)
 {
     let mut vec: Vec<(usize,usize)> = Vec::new();
     vec.push((last_point, occ.label.clone()));
-    return (vec, occ.label);
+    return (vec, occ.label, None);
 }
 
-fn approx_reverse(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize)
+fn approx_abs(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize, Option<Box<Occ>>)
 {
     let mut vec: Vec<(usize,usize)> = Vec::new();
     vec.push((last_point, occ.label.clone()));
-    return (vec, occ.label);
+    return (vec, occ.label, occ.expr.RHS.clone());
 }
 
-fn approx_simple(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize)
+fn approx_app(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize, Option<Box<Occ>>)
 {
     let mut vec1: Vec<(usize,usize)> = Vec::new();
     let p1: usize;
-    match occ.expr.LHS { Some(a) => { (vec1,p1) = ApproximateOrder(Box::into_inner(a.clone()), last_point); vec1.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
+    let l_occ: Option<Box<Occ>>;
+    match occ.expr.LHS { Some(a) => { (vec1,p1,l_occ) = ApproximateOrder(Box::into_inner(a.clone()), last_point); vec1.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
 
     let mut vec2: Vec<(usize,usize)> = Vec::new();
     let p2: usize;
-    match occ.expr.RHS { Some(a) => { (vec2,p2) = ApproximateOrder(Box::into_inner(a.clone()), last_point); vec2.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
+
+    match occ.expr.RHS { Some(a) => { (vec2,p2,_) = ApproximateOrder(Box::into_inner(a.clone()), p1); vec2.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
+
+    let mut l_vec: Vec<(usize,usize)> = Vec::new();
+    let l_p: usize;
+    let res_occ: Option<Box<Occ>>;
+    match l_occ { Some(a) => { (l_vec,l_p,res_occ) = ApproximateOrder(Box::into_inner(a.clone()), p2); l_vec.push((last_point.clone(), a.label.clone())); } None => { unreachable!("Expected left hand sign of application to be an abstraction"); } }
+
+    vec1.extend(vec2);
+    vec1.extend(l_vec);
+    //vec1.push((p2, occ.label.clone()));
+    vec1.push((l_p, occ.label.clone()));
+
+    return (vec1, occ.label, res_occ);
+}
+
+fn approx_none(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize, Option<Box<Occ>>)
+{
+    let mut vec1: Vec<(usize,usize)> = Vec::new();
+    let p1: usize;
+    match occ.expr.LHS { Some(a) => { (vec1,p1,_) = ApproximateOrder(Box::into_inner(a.clone()), last_point); vec1.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
+
+    let mut vec2: Vec<(usize,usize)> = Vec::new();
+    let p2: usize;
+    match occ.expr.RHS { Some(a) => { (vec2,p2,_) = ApproximateOrder(Box::into_inner(a.clone()), p1); vec2.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
 
     vec1.extend(vec2);
     vec1.push((p2, occ.label.clone()));
 
-    return (vec1, occ.label);
+    return (vec1, occ.label, None);
 }
 
-fn approx_rhs(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize)
+fn approx_let(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize, Option<Box<Occ>>)
 {
     let mut vec1: Vec<(usize,usize)> = Vec::new();
     let p1: usize;
-    match occ.expr.LHS { Some(a) => { (vec1,p1) = ApproximateOrder(Box::into_inner(a.clone()), last_point); vec1.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
+    match occ.expr.LHS { Some(a) => { (vec1,p1,_) = ApproximateOrder(Box::into_inner(a.clone()), last_point); vec1.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
 
-    vec1.push((p1, occ.label.clone()));
+    let mut vec2: Vec<(usize,usize)> = Vec::new();
+    let p2: usize;
+    let res_occ: Option<Box<Occ>>;
+    match occ.expr.RHS { Some(a) => { (vec2,p2,res_occ) = ApproximateOrder(Box::into_inner(a.clone()), p1); vec2.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
 
-    return (vec1, occ.label);
+    vec1.extend(vec2);
+    vec1.push((p2, occ.label.clone()));
+
+    return (vec1, occ.label, res_occ);
 }
 
-fn approx_complex(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize)
+fn approx_complex(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize, Option<Box<Occ>>)
 {
     let mut vec1: Vec<(usize,usize)> = Vec::new();
     let p1: usize;
-    match occ.expr.LHS { Some(a) => { (vec1,p1) = ApproximateOrder(Box::into_inner(a.clone()), last_point); vec1.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
+    match occ.expr.LHS { Some(a) => { (vec1,p1,_) = ApproximateOrder(Box::into_inner(a.clone()), last_point); vec1.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
 
     let occs: Vec<Box<Occ>>;
     occs = match occ.expr.Occs.clone() { Some(occs) => { occs } None => {unreachable!()} };
+
+    let mut res_occ: Option<Box<Occ>> = None;
     for _occ in occs
     {
         let mut vec2: Vec<(usize,usize)>;
         let p2: usize;
-        (vec2,p2) = ApproximateOrder(Box::into_inner(_occ.clone()), p1);
+        (vec2,p2,res_occ) = ApproximateOrder(Box::into_inner(_occ.clone()), p1);
 
         vec1.extend(vec2.into_iter());
         vec1.push((p2, occ.label.clone()));
     }
 
-    return (vec1, occ.label);
+    return (vec1, occ.label, res_occ);
+}
+
+fn approx_ref(occ: Occ, last_point: usize) -> (Vec<(usize,usize)>, usize, Option<Box<Occ>>)
+{
+    let mut vec1: Vec<(usize,usize)> = Vec::new();
+    let p1: usize;
+    match occ.expr.LHS { Some(a) => { (vec1,p1,_) = ApproximateOrder(Box::into_inner(a.clone()), last_point); vec1.push((last_point.clone(), a.label.clone())); } None => { unreachable!(); } }
+
+    vec1.push((p1, occ.label.clone()));
+
+    return (vec1, occ.label, None);
 }
 
 /* Old way of approximating
