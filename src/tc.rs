@@ -98,8 +98,9 @@ impl TypeChecker
 
 	fn check_func(&mut self) -> Type
 	{
+      dbg!(self.clone());
 		let _assumption = self.assumption.pop();
-		let assumption = match _assumption { Some(assumption) => { assumption } None => { unreachable!("No assumption exists"); } };
+		let assumption = match _assumption { Some(assumption) => { assumption } None => { unreachable!("No assumption exists for {:?}", &self.occ.expr.ident); } };
 
 		let key: SemOcc = SemOcc { ident: self.occ.clone().expr.ident, label: assumption.0 };
 		self.gamma.insert(key.clone(), assumption.1.clone());
